@@ -137,6 +137,7 @@ s = ''
 c = 0
 recentWay = None
 startedGame = False
+canBeAttacked = True
 
 while playing and player.alive:
     if not startedGame:
@@ -162,6 +163,56 @@ while playing and player.alive:
         break
 
     while not commandSuccess:
+        if canBeAttacked and random.random() < .4 and player.location.hasCreatures() and player.location.creature_type != "unicorn" and player.location.creature_type != "thestral" and player.location.creature_type != "centaur":
+            creature = random.choice(player.location.creatures)
+            print("You're being attacked by " + creature.name)
+            print("You can type 'run' to run away, or 'attack' to attack the creature with spells you know.")
+            print()
+            command = input("What you'll do?")
+            commandWords = command.split()
+            if commandWords[0].lower() == "run":
+                player.health -= creature.damage
+                canBeAttacked = False
+                print("You succeeded in running away, but you lost " + str(creature.damage) + " points of health.")
+
+            elif commandWords[0].lower() == "attack":
+                def isInt(s):
+                    try:
+                        int(s)
+                        return True
+                    except ValueError:
+                        return False
+                if player.spells != []:
+                    c = len(player.spells)
+                    clear()
+                    print("You know the following spells: ")
+                    for i in range(len(player.spells)):
+                        print(str(i + 1) + ". " + str(player.spells[i].name))
+                    print()
+                    spell = input("Enter the number of spell you want to use: ")
+                    while not isInt(spell) or int(spell) > len(player.spells):
+                        clear()
+                        print("Please enter a valid number.")
+                        print()
+                        print("You know the following spells: ")
+                        for i in range(len(player.spells)):
+                            print(str(i + 1) + ". " + str(player.spells[i].name))
+                        print()
+                        spell = input("Enter the number of spell you want to use: ")
+
+                    targetSpell = player.spells[int(spell)-1]
+
+                    player.attackCreature(creature, targetSpell)
+                    printWay(recentWay)
+                    printSituation()
+                    canBeAttacked = False
+                else:
+                    print("You don't know any spells... You can try to run, though")
+                    commandSuccess = False
+            else:
+                print("Please enter a valid command.")
+                commandSuccess = False
+
         commandSuccess = True
         command = input("What now? ")
         commandWords = command.split()
@@ -170,6 +221,7 @@ while playing and player.alive:
                 print("Invalid destination, try again")
                 commandSuccess = False
             else:
+                canBeAttacked = True
                 recentWay = commandWords[1]
                 timePasses = True
         elif commandWords[0].lower() == "pickup":  #can handle multi-word objects
@@ -236,7 +288,7 @@ while playing and player.alive:
                         print(str(i + 1) + ". " + str(target.objects[i].name) + ", " + str(target.objects[i].desc))
                     print()
                     object_i = input("Enter the number of object you want to take: ")
-                    while isInt(object_i) and int(object_i) > len(target.objects):
+                    while not isInt(object_i) or int(object_i) > len(target.objects):
                         clear()
                         print("Please enter a valid number.")
                         print()
@@ -281,7 +333,7 @@ while playing and player.alive:
                     print(str(i + 1) + ". " + str(player.spells[i].name))
                 print()
                 spell = input("Enter the number of spell you want to use: ")
-                while isInt(spell) and int(spell) > len(player.spells):
+                while not isInt(spell) or int(spell) > len(player.spells):
                     clear()
                     print("Please enter a valid number.")
                     print()

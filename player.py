@@ -13,7 +13,6 @@ class Player:
         self.alive = True
         self.spells = []
         self.itemsweight = 0
-        self.damage = 10
         self.creaturesAttacked = 0
     def goDirection(self, direction):
         if self.location.getDestination(direction):
