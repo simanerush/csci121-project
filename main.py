@@ -60,7 +60,7 @@ def createWorld():
     obj1.putInCont(bag)
     obj2.putInCont(bag)
     bag.putInRoom(f)
-    player.items = [Healing('Potion', 'Restores health', 3, 20), Healing('Potion', 'Restores health', 3, 20)]
+    player.items = [Healing('Potion', 'Restores health', 3, 20), Healing('Potion', 'Restores health', 3, 20), Item('Hui', '...', 3)]
     player.spells = [Spell('Avada Kedavra', 'aaaaaa', 100)]
 
 def clear():
@@ -125,6 +125,7 @@ def showHelp():
     print("open <bag> -- allows you to open the bag you might encounter")
     print("talk <creature name> -- allows you to talk with the creature (if it is friendly)")
     print("way -- allows you to display/hide your recent moves")
+    print("ask -- allows you to ask Ronald Weasley for help")
     print("exit -- quit the game")
     print()
     input("Press enter to continue...")
@@ -138,6 +139,7 @@ c = 0
 recentWay = None
 startedGame = False
 canBeAttacked = True
+timeSinceAskedRon = 0
 
 while playing and player.alive:
     if not startedGame:
@@ -399,6 +401,38 @@ while playing and player.alive:
             else:
                 print("No such item...")
                 commandSuccess = False
+        elif commandWords[0].lower() == "ask":
+            recentWay = None
+            if timeSinceAskedRon < 5:
+                print()
+                print("Ronald is tired, he doesn't want to help you")
+                print()
+                input("Press enter to continue...")
+            elif timeSinceAskedRon >= 5 and player.location.hasCreatures() and player.location.creature_type != "unicorn" and player.location.creature_type != "thestral" and player.location.creature_type != "centaur":
+                if player.location.creature_type == "spider":
+                    print()
+                    print("Ronald is afraid of spiders and he won't help you!")
+                    print()
+                    timeSinceAskedRon = 0
+                    input("Press enter to continue...")
+                else:
+                    creature = random.choice(player.location.creatures)
+                    creature.die()
+                    print("Ronald has attacked " + creature.name)
+                    loot = [Healing('Healing Potion', 'Drink this to restore health', 2, 20), None]
+                    choice = random.choice(loot)
+                    if choice is not None:
+                        print()
+                        print("Ronald got", choice.name, " after attacking ", creature.name)
+                        print()
+                        choice.putInRoom(player.location)
+                        timeSinceAskedRon = 0
+                        input("Press enter to continue...")
+            else:
+                player.items.append(Healing('Healing Potion', 'Drink this to restore health', 2, 20))
+                print("Ronald gave you a Healing Potion.")
+                timeSinceAskedRon = 0
+                input("Press enter to continue...")
         elif commandWords[0].lower() == "talk":
             targetName = command[5:]
             target = player.location.getCreatureByName(targetName)
@@ -457,4 +491,5 @@ while playing and player.alive:
             print("Not a valid command")
             commandSuccess = False
     if timePasses == True:
+        timeSinceAskedRon += 1
         updater.updateAll()

@@ -1,6 +1,7 @@
 import os
 import random
 from item import Item, Healing
+from collections import Counter
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -47,19 +48,36 @@ class Player:
         self.items.remove(item)
     def showInventory(self):
         clear()
-        print("You are currently carrying:")
-        print()
-        for i in self.items:
-            print(i.name)
-        print()
-        input("Press enter to continue...")
+        if len(self.items) == 0:
+            print()
+            print("You don't carry anything...")
+            print()
+            input("Press enter to continue...")
+        else:
+            print("You are currently carrying:")
+            print()
+            itemsNames = []
+            for i in self.items:
+                itemsNames.append(i.name)
+
+            itemsCounted = dict(Counter(itemsNames))
+            for key, value in itemsCounted.items():
+                print(key + " x" + str(value))
+            print()
+            input("Press enter to continue...")
     def printItems(self):
         if len(self.items) == 0:
             return "You don't carry anything..."
         else:
             string = ''
-            for i in range(len(self.items)):
-                string += (str(i + 1) + '. ' + self.items[i].name + '\n')
+            itemsNames = []
+            for i in self.items:
+                itemsNames.append(i.name)
+            itemsCounted = dict(Counter(itemsNames))
+            for key, value in itemsCounted.items():
+                string += (key + " x" + str(value) + '\n')
+            # for i in range(len(self.items)):
+            #     string += (str(i + 1) + '. ' + self.items[i].name + '\n')
 
             return string
     def printSpells(self):
@@ -99,7 +117,7 @@ class Player:
             if cr.type != "thestral" and cr.type != "unicorn" and cr.type != "centaur":
                 loot = [Healing('Healing Potion', 'Drink this to restore health', 2, 20), None]
                 choice = random.choice(loot)
-                if choice != None:
+                if choice is not None:
                     if self.itemsweight + choice.weight <= 8:
                         self.items.append(choice)
                         print()

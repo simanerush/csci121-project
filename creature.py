@@ -76,8 +76,7 @@ class Creature:
         self.room.removeCreature(self)
         self.room = room
         room.addCreature(self)
-    def attack(self, player):
-        pass
+
     def die(self):
         self.room.removeCreature(self)
         updater.deregister(self)
