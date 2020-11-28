@@ -15,6 +15,7 @@ class Player:
         self.spells = []
         self.itemsweight = 0
         self.creaturesAttacked = 0
+        self.deluminatorsCount = 0
     def goDirection(self, direction):
         if self.location.getDestination(direction):
             self.location = self.location.getDestination(direction)
@@ -86,7 +87,7 @@ class Player:
         else:
             string = ''
             for i in range(len(self.spells)):
-                string += (str(i + 1) + '. ' + self.spells[i].name + '\n')
+                string += (str(i + 1) + '. ' + self.spells[i].name + '(' + 'Damage: ' + str(self.spells[i].damage) + ')' + '\n')
 
             return string
 
@@ -115,7 +116,7 @@ class Player:
             print("You win. Your health is now " + str(self.health) + ".")
             self.creaturesAttacked += 1
             if cr.type != "thestral" and cr.type != "unicorn" and cr.type != "centaur":
-                loot = [Healing('Healing Potion', 'Drink this to restore health', 2, 20), None]
+                loot = [Healing('Healing Potion', 'Drink this to restore health', 2, 20), Item('Deluminator', 'Bring this to Dumbledore', 1), None]
                 choice = random.choice(loot)
                 if choice is not None:
                     if self.itemsweight + choice.weight <= 8:

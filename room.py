@@ -65,6 +65,12 @@ class Room:
         return False
     def hasCreatures(self):
         return self.creatures != []
+    def hasDeluminator(self):
+        for item in self.items:
+            if item.name.lower() == "deluminator":
+                return True
+            else:
+                return False
     def hasContainers(self):
         return self.containers != []
     def getCreatureByName(self, name):

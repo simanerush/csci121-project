@@ -1,3 +1,4 @@
+
 from room import Room
 from player import Player
 from item import Item, Healing
@@ -23,6 +24,9 @@ def createWorld():
     m = Room("You can see a mysterious glowing from the trees. It smells good here.", "unicorn")
     rooms = [a, b, c, d, e, f, g, h, k, m]
     random.shuffle(rooms)
+    roomsWithDeluminators = random.sample(rooms, 2)
+    for room in roomsWithDeluminators:
+        Item('Deluminator', 'Bring this to Dumbledore', 1).putInRoom(room)
 
     Room.connectRooms(rooms[0], "east", rooms[1], "west")
     Room.connectRooms(rooms[0], "north", rooms[2], "south")
@@ -52,44 +56,49 @@ def createWorld():
     # Room.connectRooms(k, "north", m, "south")
 
     player.location = a
-    s1 = Spell('Expelliarmus', 'Helpful but not very powerful spell', 3)
+    s1 = Spell('Expelliarmus', 'Helpful but not very powerful spell', 10)
     s1.putInRoom(b)
     bag = Container("Old bag", [])
-    obj1 = Spell('Sectumsempra', 'Against enemies...', 10)
+    obj1 = Spell('Sectumsempra', 'Against enemies...', 30)
     obj2 = Healing('Potion', 'Restores health', 3, 20)
     obj1.putInCont(bag)
     obj2.putInCont(bag)
     bag.putInRoom(f)
-    player.items = [Healing('Potion', 'Restores health', 3, 20), Healing('Potion', 'Restores health', 3, 20), Item('Hui', '...', 3)]
-    player.spells = [Spell('Avada Kedavra', 'aaaaaa', 100)]
+    player.items = []
+    player.spells = []
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def printSituation():
+    print("Your health: " + str(player.health))
+    print()
     print(player.location.desc)
     print()
     if player.location.hasCreatures():
-        print("This room contains the following creatures:")
-        for m in player.location.creatures:
-            print(m.name)
+        print("The following creatures are nearby:")
+        for cr in player.location.creatures:
+            print(cr.name + " (health: " + str(cr.health) + ")")
         print()
     if player.location.hasItems():
-        print("This room contains the following items:")
+        print("The following things are lying in the grass:")
         for i in player.location.items:
             print(i.name)
         print()
     if player.location.hasSpells():
-        print("This room contains the following spell instructions:")
+        print("The following spell instructions are around you:")
         for s in player.location.spells:
             print(s.name)
         print()
     if player.location.hasContainers():
-        print("This room contains the following containers:")
+        print("You can see the following bags:")
         for cont in player.location.containers:
             print(cont.name)
         print()
-    print("You can go in the following directions:")
+    if player.location.hasDeluminator():
+        print("There is a deluminator near you! Use 'pickup deluminator' to pick it up")
+        print()
+    print("You can go in the following directions: (Use go <direction> to go there)")
     for e in player.location.exitNames():
         print(e)
     print()
@@ -104,27 +113,27 @@ def printWay(recentWay):
         s += (recentWay + '->' + '?')
     if c == 10:
         s = (recentWay + '->' + '?')
-    if recentWay != None:
-        print("Your way:")
-        print(s)
-        print()
+
+    print("Your way:")
+    print(s)
+    print()
 
 
 def showHelp():
     clear()
+    print("info -- allows you too once again see the welcoming screen.")
     print("go <direction> -- moves you in the given direction")
     print("inventory -- opens your inventory")
     print("pickup <item> -- picks up the item")
     print("drop <item> -- drops the item that's currently in your inventory")
     print("wait <number> -- allows you to wait for a number of turns")
     print("me -- allows you to see your status")
-    print("inspect <item> -- allows you to find out moree about an item (it can be in a location or your inventory)")
+    print("inspect <item> -- allows you to find out more about an item (it can be in a location or your inventory)")
     print("use <item> -- allows you to interract with items in your inventory")
     print("attack <creature name> -- allows you to attack the creature with spells you've learnt")
     print("learn <spell> -- allows you to learn the spell")
     print("open <bag> -- allows you to open the bag you might encounter")
     print("talk <creature name> -- allows you to talk with the creature (if it is friendly)")
-    print("way -- allows you to display/hide your recent moves")
     print("ask -- allows you to ask Ronald Weasley for help")
     print("exit -- quit the game")
     print()
@@ -146,14 +155,21 @@ while playing and player.alive:
         startedGame = True
         clear()
         print()
-        print("Welcome to my game")
+        print('================= Forbidden Forest Mysteries =================')
         print()
-        input("Press enter to continue...")
+        print("H a g r i d: ")
+        print("It's you again! One more detention? What?\nYou've accused this Slytherin guy again? I'm sorry.\nLet's go to the Forbidden Forest then. Do you remember?\nYou need to be very careful, you have the whole night to stay here.\nThere are many cratures who live in this place, some of them are kind\nand some are evil.\nReminder: they might attack you, and I don't want to bring\nyou to hospital tomorrow.\nAlso, because of yesterday's accident, you might not remember spells.\nBut I think that there might be some students' instructions left in the forest.\nRonald, I'll give you some Healing Potions... Just in case...\nOh, I almost forgot! Dumbledore wants you to bring 5 deluminators.")
+        print()
+        print()
+        print("H i n t: ")
+        print("You and Ronald are to spend a detention in a Forbidden Forest.\nType 'help' to see what you can do. Good luck!")
+        print()
+        input("Press enter when you ready to start...")
     printWay(recentWay)
     printSituation()
     commandSuccess = False
     timePasses = False
-    if player.health > 60 and len(player.spells) == 3:
+    if len(player.spells) == 3 and player.deluminatorsCount == 5:
         clear()
         playing = False
         print()
@@ -163,21 +179,32 @@ while playing and player.alive:
         print()
         input("Press enter to quit the game...")
         break
+    elif player.health <= 0:
+        clear()
+        playing = False
+        print()
+        print("You are seriously injured. You've lost the game")
+        print()
+        print()
+        print()
+        input("Press enter to quit the game...")
+        break
 
     while not commandSuccess:
-        if canBeAttacked and random.random() < .4 and player.location.hasCreatures() and player.location.creature_type != "unicorn" and player.location.creature_type != "thestral" and player.location.creature_type != "centaur":
+        if canBeAttacked and random.random() < .3 and player.location.hasCreatures() and player.location.creature_type != "unicorn" and player.location.creature_type != "thestral" and player.location.creature_type != "centaur":
             creature = random.choice(player.location.creatures)
             print("You're being attacked by " + creature.name)
             print("You can type 'run' to run away, or 'attack' to attack the creature with spells you know.")
             print()
             command = input("What you'll do?")
             commandWords = command.split()
-            if commandWords[0].lower() == "run":
-                player.health -= creature.damage
-                canBeAttacked = False
-                print("You succeeded in running away, but you lost " + str(creature.damage) + " points of health.")
 
-            elif commandWords[0].lower() == "attack":
+            while commandWords[0].lower() != "attack" and commandWords[0].lower() != "run":
+                print("Please enter a valid command.")
+                command = input("What you'll do?")
+                commandWords = command.split()
+
+            if commandWords[0].lower() == "attack":
                 def isInt(s):
                     try:
                         int(s)
@@ -210,7 +237,17 @@ while playing and player.alive:
                     canBeAttacked = False
                 else:
                     print("You don't know any spells... You can try to run, though")
-                    commandSuccess = False
+                    command = input("What you'll do?")
+                    commandWords = command.split()
+
+            if commandWords[0].lower() == "run":
+                player.health -= creature.damage
+                canBeAttacked = False
+                print("You succeeded in running away, but you lost " + str(creature.damage) + " points of health.")
+                printWay(recentWay)
+                printSituation()
+
+
             else:
                 print("Please enter a valid command.")
                 commandSuccess = False
@@ -218,244 +255,257 @@ while playing and player.alive:
         commandSuccess = True
         command = input("What now? ")
         commandWords = command.split()
-        if commandWords[0].lower() == "go":   #cannot handle multi-word directions
-            if player.goDirection(commandWords[1]) == False:
-                print("Invalid destination, try again")
-                commandSuccess = False
-            else:
-                canBeAttacked = True
-                recentWay = commandWords[1]
-                timePasses = True
-        elif commandWords[0].lower() == "pickup":  #can handle multi-word objects
-            targetName = command[7:]
-            target = player.location.getItemByName(targetName)
-            if target != False:
-                if player.itemsweight + target.weight <= 8:
-                    player.pickup(target)
-                else:
-                    print("You can't pickup this item, it is too heavy. Drop some to do this.")
+        if commandWords == []:
+            print("Not a valid command...")
+            commandSuccess = False
+        else:
+            if commandWords[0].lower() == "go":   #cannot handle multi-word directions
+                if len(commandWords) < 2 or player.goDirection(commandWords[1]) == False:
+                    print("Invalid destination, try again")
                     commandSuccess = False
-            else:
-                print("No such item.")
-                commandSuccess = False
-        elif commandWords[0].lower() == "drop":
-            targetName = command[5:]
-            target = player.getItemByName(targetName)
-            if target != False:
-                player.drop(target)
-            else:
-                print("No such item.")
-                commandSuccess = False
-        elif commandWords[0].lower() == "use":
-            targetName = command[4:]
-            target = player.getItemByName(targetName)
-            if target != False and isinstance(target, Healing):
-                player.use(target)
-            else:
-                if target == False:
+                else:
+                    canBeAttacked = True
+                    recentWay = commandWords[1]
+                    timePasses = True
+            elif commandWords[0].lower() == "pickup":  #can handle multi-word objects
+                recentWay = None
+                targetName = command[7:]
+                target = player.location.getItemByName(targetName)
+                if targetName.lower() == "deluminator":
+                    player.deluminatorsCount += 1
+                if target != False:
+                    if player.itemsweight + target.weight <= 8:
+                        player.pickup(target)
+                    else:
+                        print("You can't pickup this item, it is too heavy. Drop some to do this.")
+                        commandSuccess = False
+                else:
                     print("No such item.")
                     commandSuccess = False
-                elif not isinstance(target, Healing):
-                    print("You can't use this item.")
+            elif commandWords[0].lower() == "info":
+                clear()
+                print()
+                print('================= Forbidden Forest Mysteries =================')
+                print()
+                print("H a g r i d: ")
+                print("It's you again! One more detention? What? You've accused this Slytherin guy again? I'm sorry. Let's go to the Forbidden Forest then. Do you remember? You need to be very careful, you have the whole night to stay here. There are many creatures who live in this place, some of them are kind and some are evil. Reminder: they might attack you, and I don't want to bring you to hospital tomorrow. Also, because of yesterday's accident, you might not remember spells. But I think that there might be some students' instructions left in the forest. Ronald, I'll give you some Healing Potions... Just in case...")
+                print()
+                print()
+                print("H i n t: ")
+                print("You and Ronald are to spend a detention in a Forbidden Forest. Type 'help' to see what you can do. Good luck! To succeed, try to learn 3 spells and get your\nhealth up to 60 (Potions restore health).")
+                print()
+                input("Press enter when you ready to start...")
+            elif commandWords[0].lower() == "drop":
+                targetName = command[5:]
+                target = player.getItemByName(targetName)
+                if target != False:
+                    player.drop(target)
+                else:
+                    print("No such item.")
                     commandSuccess = False
-        elif commandWords[0].lower() == "learn":
-            targetName = command[6:]
-            target = player.location.getSpellByName(targetName)
-            if target != False:
-                player.learnSpell(target)
-            else:
-                print("You can't learn this spell here.")
-                commandSuccess = False
-        elif commandWords[0].lower() == "inventory":
-            player.showInventory()
-        elif commandWords[0].lower() == "help":
-            showHelp()
-        elif commandWords[0].lower() == "open":
-            def isInt(s):
-                try:
-                    int(s)
-                    return True
-                except ValueError:
-                    return False
-            targetName = command[5:]
-            target = player.location.getContainerByName(targetName)
-            if target:
+            elif commandWords[0].lower() == "use":
+                recentWay = None
+                targetName = command[4:]
+                target = player.getItemByName(targetName)
+                if target != False and isinstance(target, Healing):
+                    player.use(target)
+                else:
+                    if target == False:
+                        print("No such item.")
+                        commandSuccess = False
+                    elif not isinstance(target, Healing):
+                        print("You can't use this item.")
+                        commandSuccess = False
+            elif commandWords[0].lower() == "learn":
+                recentWay = None
+                printWay(recentWay)
+                targetName = command[6:]
+                target = player.location.getSpellByName(targetName)
+                if target != False:
+                    player.learnSpell(target)
+                else:
+                    print("You can't learn this spell here.")
+                    commandSuccess = False
+            elif commandWords[0].lower() == "inventory":
+                player.showInventory()
+            elif commandWords[0].lower() == "help":
+                showHelp()
+            elif commandWords[0].lower() == "open":
+                recentWay = None
+                printWay(recentWay)
+                def isInt(s):
+                    try:
+                        int(s)
+                        return True
+                    except ValueError:
+                        return False
+                targetName = command[5:]
+                target = player.location.getContainerByName(targetName)
+                if target:
 
-                if target.objects != []:
-                    clear()
-                    print()
-                    print("This contains the following objects: ")
-                    print()
-                    for i in range(len(target.objects)):
-                        print(str(i + 1) + ". " + str(target.objects[i].name) + ", " + str(target.objects[i].desc))
-                    print()
-                    object_i = input("Enter the number of object you want to take: ")
-                    while not isInt(object_i) or int(object_i) > len(target.objects):
+                    if target.objects != []:
                         clear()
-                        print("Please enter a valid number.")
                         print()
                         print("This contains the following objects: ")
+                        print()
                         for i in range(len(target.objects)):
                             print(str(i + 1) + ". " + str(target.objects[i].name) + ", " + str(target.objects[i].desc))
                         print()
                         object_i = input("Enter the number of object you want to take: ")
+                        while not isInt(object_i) or int(object_i) > len(target.objects):
+                            clear()
+                            print("Please enter a valid number.")
+                            print()
+                            print("This contains the following objects: ")
+                            for i in range(len(target.objects)):
+                                print(str(i + 1) + ". " + str(target.objects[i].name) + ", " + str(target.objects[i].desc))
+                            print()
+                            object_i = input("Enter the number of object you want to take: ")
 
-                    object = target.objects[int(object_i)-1]
-                    if isinstance(object, Spell):
-                        player.learnSpellfromCont(object)
-                        target.removeObject(int(object_i) - 1)
-                    elif isinstance(object, Healing) or isinstance(object, Item):
-                        player.pickupFromCont(object)
-                        target.removeObject(int(object_i)  - 1)
+                        object = target.objects[int(object_i)-1]
+                        if isinstance(object, Spell):
+                            player.learnSpellfromCont(object)
+                            target.removeObject(int(object_i) - 1)
+                        elif isinstance(object, Healing) or isinstance(object, Item):
+                            player.pickupFromCont(object)
+                            target.removeObject(int(object_i)  - 1)
+
+                    else:
+                        clear()
+                        print()
+                        print("This bag is empty... ")
+                        print()
+                        input("Press enter to continue...")
 
                 else:
+                    print("No such container here.")
+                    commandSuccess = False
+            elif commandWords[0].lower() == "exit":
+                playing = False
+            elif commandWords[0].lower() == "attack":
+                def isInt(s):
+                    try:
+                        int(s)
+                        return True
+                    except ValueError:
+                        return False
+                if player.spells != []:
+                    c = len(player.spells)
                     clear()
-                    print()
-                    print("This bag is empty... ")
-                    print()
-                    input("Press enter to continue...")
-
-            else:
-                print("No such container here.")
-                commandSuccess = False
-        elif commandWords[0].lower() == "exit":
-            playing = False
-        elif commandWords[0].lower() == "attack":
-            def isInt(s):
-                try:
-                    int(s)
-                    return True
-                except ValueError:
-                    return False
-            if player.spells != []:
-                c = len(player.spells)
-                clear()
-                print("You know the following spells: ")
-                for i in range(len(player.spells)):
-                    print(str(i + 1) + ". " + str(player.spells[i].name))
-                print()
-                spell = input("Enter the number of spell you want to use: ")
-                while not isInt(spell) or int(spell) > len(player.spells):
-                    clear()
-                    print("Please enter a valid number.")
-                    print()
                     print("You know the following spells: ")
                     for i in range(len(player.spells)):
                         print(str(i + 1) + ". " + str(player.spells[i].name))
                     print()
                     spell = input("Enter the number of spell you want to use: ")
-                targetName = command[7:]
-                target = player.location.getCreatureByName(targetName)
-                targetSpell = player.spells[int(spell)-1]
-                if target != False:
-                    player.attackCreature(target, targetSpell)
+                    while not isInt(spell) or int(spell) > len(player.spells):
+                        clear()
+                        print("Please enter a valid number.")
+                        print()
+                        print("You know the following spells: ")
+                        for i in range(len(player.spells)):
+                            print(str(i + 1) + ". " + str(player.spells[i].name))
+                        print()
+                        spell = input("Enter the number of spell you want to use: ")
+                    targetName = command[7:]
+                    target = player.location.getCreatureByName(targetName)
+                    targetSpell = player.spells[int(spell)-1]
+                    if target != False:
+                        player.attackCreature(target, targetSpell)
+                    else:
+                        print("No such creature.")
+                        commandSuccess = False
                 else:
-                    print("No such creature.")
+                    print("You don't know any spells...")
                     commandSuccess = False
-            else:
-                print("You don't know any spells...")
-                commandSuccess = False
 
-        elif commandWords[0].lower() == "wait":
-            def isInt(s):
-                try:
-                    int(s)
-                    return True
-                except ValueError:
-                    return False
-            targetNumber = command[5:]
-            if isInt(targetNumber):
-                for i in range(int(targetNumber)):
-                    updater.updateAll()
-            else:
-                print("Please enter a number.")
-                commandSuccess = False
-        elif commandWords[0].lower() == "me":
-            clear()
-            print()
-            print(player.location.desc)
-            print()
-            print("You are holding folowing items: ", player.printItems())
-            print("Your health is ", player.health)
-            print()
-            print("You know the following spells: ", player.printSpells())
-            print()
-            input("Press enter to continue...")
-        elif commandWords[0].lower() == "inspect":
-            targetName = command[8:]
-            if player.location.getItemByName(targetName)!= False and player.getItemByName(targetName)!=False:
+            elif commandWords[0].lower() == "wait":
+                def isInt(s):
+                    try:
+                        int(s)
+                        return True
+                    except ValueError:
+                        return False
+                targetNumber = command[5:]
+                if isInt(targetNumber):
+                    for i in range(int(targetNumber)):
+                        updater.updateAll()
+                else:
+                    print("Please enter a number.")
+                    commandSuccess = False
+            elif commandWords[0].lower() == "me":
+                recentWay = None
                 clear()
-                print(player.getItemByName(targetName).desc)
+                print()
+                printWay(recentWay)
+                print(player.location.desc)
+                print()
+                print("You are holding folowing items: ", player.printItems())
+                print("Your health is ", player.health)
+                print()
+                print("You know the following spells: ", player.printSpells())
                 print()
                 input("Press enter to continue...")
-            elif player.location.getItemByName(targetName)!= False:
-                clear()
-                print(player.location.getItemByName(targetName).desc)
-                print()
-                input("Press enter to continue...")
-            elif player.getItemByName(targetName)!= False:
-                clear()
-                print(player.getItemByName(targetName).desc)
-                print()
-                input("Press enter to continue...")
-            else:
-                print("No such item...")
-                commandSuccess = False
-        elif commandWords[0].lower() == "ask":
-            recentWay = None
-            if timeSinceAskedRon < 5:
-                print()
-                print("Ronald is tired, he doesn't want to help you")
-                print()
-                input("Press enter to continue...")
-            elif timeSinceAskedRon >= 5 and player.location.hasCreatures() and player.location.creature_type != "unicorn" and player.location.creature_type != "thestral" and player.location.creature_type != "centaur":
-                if player.location.creature_type == "spider":
+            elif commandWords[0].lower() == "inspect":
+                targetName = command[8:]
+                if player.location.getItemByName(targetName)!= False and player.getItemByName(targetName)!=False:
+                    clear()
+                    print(player.getItemByName(targetName).desc)
                     print()
-                    print("Ronald is afraid of spiders and he won't help you!")
+                    input("Press enter to continue...")
+                elif player.location.getItemByName(targetName)!= False:
+                    clear()
+                    print(player.location.getItemByName(targetName).desc)
                     print()
-                    timeSinceAskedRon = 0
+                    input("Press enter to continue...")
+                elif player.getItemByName(targetName)!= False:
+                    clear()
+                    print(player.getItemByName(targetName).desc)
+                    print()
                     input("Press enter to continue...")
                 else:
-                    creature = random.choice(player.location.creatures)
-                    creature.die()
-                    print("Ronald has attacked " + creature.name)
-                    loot = [Healing('Healing Potion', 'Drink this to restore health', 2, 20), None]
-                    choice = random.choice(loot)
-                    if choice is not None:
+                    print("No such item...")
+                    commandSuccess = False
+            elif commandWords[0].lower() == "ask":
+                recentWay = None
+                if timeSinceAskedRon < 10:
+                    print()
+                    print("Ronald is tired, he doesn't want to help you")
+                    print()
+                    input("Press enter to continue...")
+                elif timeSinceAskedRon >= 10 and player.location.hasCreatures() and player.location.creature_type != "unicorn" and player.location.creature_type != "thestral" and player.location.creature_type != "centaur":
+                    if player.location.creature_type == "spider":
                         print()
-                        print("Ronald got", choice.name, " after attacking ", creature.name)
+                        print("Ronald is afraid of spiders and he won't help you!")
                         print()
-                        choice.putInRoom(player.location)
                         timeSinceAskedRon = 0
                         input("Press enter to continue...")
-            else:
-                player.items.append(Healing('Healing Potion', 'Drink this to restore health', 2, 20))
-                print("Ronald gave you a Healing Potion.")
-                timeSinceAskedRon = 0
-                input("Press enter to continue...")
-        elif commandWords[0].lower() == "talk":
-            targetName = command[5:]
-            target = player.location.getCreatureByName(targetName)
-            if target != False:
-                if target.type == "unicorn" or target.type == "thestral" or target.type == "centaur":
-                    clear()
-                    loot = ["spell", "heal", None]
-                    choice = random.choice(loot)
-                    if choice == "heal":
-                        if 2 + player.itemsweight <= 8:
-                            player.items.append(Healing('Healing Potion', 'Drink this to restore health', 2, 20))
+                    else:
+                        creature = random.choice(player.location.creatures)
+                        creature.die()
+                        print("Ronald has attacked " + creature.name)
+                        loot = [Healing('Healing Potion', 'Drink this to restore health', 2, 20), None]
+                        choice = random.choice(loot)
+                        if choice is not None:
                             print()
-                            print(str(target.name) + " gave you a Healing potion.")
+                            print("Ronald got", choice.name, " after attacking ", creature.name)
                             print()
+                            choice.putInRoom(player.location)
+                            timeSinceAskedRon = 0
                             input("Press enter to continue...")
-                        else:
-                            Healing('Healing Potion', 'Drink this to restore health', 2, 20).putInRoom(player.location)
-                            print()
-                            print(str(target.name) + " gave you a Healing potion, but you do not have any space.")
-                            print()
-                            input("Press enter to continue...")
-                    elif choice == "spell":
-                        if len(player.spells) == 3:
+                else:
+                    player.items.append(Healing('Healing Potion', 'Drink this to restore health', 2, 20))
+                    print("Ronald gave you a Healing Potion.")
+                    timeSinceAskedRon = 0
+                    input("Press enter to continue...")
+            elif commandWords[0].lower() == "talk":
+                targetName = command[5:]
+                target = player.location.getCreatureByName(targetName)
+                if target != False:
+                    if target.type == "unicorn" or target.type == "thestral" or target.type == "centaur":
+                        clear()
+                        loot = ["spell", "heal", "del", None]
+                        choice = random.choice(loot)
+                        if choice == "heal":
                             if 2 + player.itemsweight <= 8:
                                 player.items.append(Healing('Healing Potion', 'Drink this to restore health', 2, 20))
                                 print()
@@ -468,28 +518,75 @@ while playing and player.alive:
                                 print(str(target.name) + " gave you a Healing potion, but you do not have any space.")
                                 print()
                                 input("Press enter to continue...")
-                        else:
-                            player.spells.append(Spell("Petrificus Totalus", "This spell makes the creture weaker", 60))
+                        elif choice == "spell":
+                            if len(player.spells) == 3:
+                                if 2 + player.itemsweight <= 8:
+                                    player.items.append(Healing('Healing Potion', 'Drink this to restore health', 2, 20))
+                                    print()
+                                    print(str(target.name) + " gave you a Healing potion.")
+                                    print()
+                                    input("Press enter to continue...")
+                                else:
+                                    Healing('Healing Potion', 'Drink this to restore health', 2, 20).putInRoom(player.location)
+                                    print()
+                                    print(str(target.name) + " gave you a Healing potion, but you do not have any space.")
+                                    print()
+                                    input("Press enter to continue...")
+                            else:
+                                player.spells.append(Spell("Petrificus Totalus", "This spell makes the creture weaker", 60))
+                                print()
+                                print(str(target.name) + " taught you how to use Petrificus Totalus")
+                                print()
+                                input("Press enter to continue...")
+                        elif choice == "delum":
+                            if player.deluminatorsCount < 4:
+                                if 1 + player.itemsweight <= 8:
+                                    player.deluminatorsCount += 1
+                                    player.items(Item('Deluminator', 'Bring this to Dumbledore', 1))
+                                    print()
+                                    print(str(target.name) + " gave you a deluminator.")
+                                    print()
+                                    input("Press enter to continue...")
+                                else:
+                                    print()
+                                    Item('Deluminator', 'Bring this to Dumbledore', 1).putInRoom(player.location)
+                                    print(str(target.name) + " gave you a deluminator, but you do not have any space.")
+                                    print()
+                                    input("Press enter to continue...")
+                            else:
+                                if 2 + player.itemsweight <= 8:
+                                    player.items.append(Healing('Healing Potion', 'Drink this to restore health', 2, 20))
+                                    print()
+                                    print(str(target.name) + " gave you a Healing potion.")
+                                    print()
+                                    input("Press enter to continue...")
+                                else:
+                                    Healing('Healing Potion', 'Drink this to restore health', 2, 20).putInRoom(player.location)
+                                    print()
+                                    print(str(target.name) + " gave you a Healing potion, but you do not have any space.")
+                                    print()
+                                    input("Press enter to continue...")
+
+                        elif choice == None:
                             print()
-                            print(str(target.name) + " taught you how to use Petrificus Totalus")
+                            printWay(recentWay)
+                            printSituation()
+                            print("Talking to this creature didn't result in anything, you can try again")
                             print()
                             input("Press enter to continue...")
-                    elif choice == None:
-                        print()
-                        print("Talking to this creature didn't result in anything, you can try again")
-                        print()
-                        input("Press enter to continue...")
-                else:
-                    clear()
-                    print("This creature doesn't want to talk with you...")
-                    commandSuccess = False
+                    else:
+                        clear()
+                        printWay(recentWay)
+                        printSituation()
+                        print("This creature doesn't want to talk with you...")
+                        commandSuccess = False
 
+                else:
+                    print("No such creature...")
+                    commandSuccess = False
             else:
-                print("No such creature...")
+                print("Not a valid command...")
                 commandSuccess = False
-        else:
-            print("Not a valid command")
-            commandSuccess = False
     if timePasses == True:
         timeSinceAskedRon += 1
         updater.updateAll()
