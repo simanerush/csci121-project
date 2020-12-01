@@ -45,6 +45,11 @@ class Player:
             if i.name.lower() == name.lower():
                 return i
         return False
+    def getSpellByName(self, name):
+        for s in self.spells:
+            if s.name.lower() == name.lower():
+                return s
+        return False
     def removeItem(self, item):
         self.items.remove(item)
     def showInventory(self):
@@ -120,6 +125,8 @@ class Player:
                 choice = random.choice(loot)
                 if choice is not None:
                     if self.itemsweight + choice.weight <= 8:
+                        if choice.name == 'Deluminator':
+                            player.deluminatorsCount += 1
                         self.items.append(choice)
                         print()
                         print("You've got", choice.name)

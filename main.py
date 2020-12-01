@@ -60,7 +60,7 @@ def createWorld():
     s1.putInRoom(b)
     bag = Container("Old bag", [])
     obj1 = Spell('Sectumsempra', 'Against enemies...', 30)
-    obj2 = Healing('Potion', 'Restores health', 3, 20)
+    obj2 = Healing('Healing Potion', 'Restores health', 2, 20)
     obj1.putInCont(bag)
     obj2.putInCont(bag)
     bag.putInRoom(f)
@@ -71,6 +71,7 @@ def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def printSituation():
+    printWay(recentWay)
     print("Your health: " + str(player.health))
     print()
     print(player.location.desc)
@@ -111,8 +112,8 @@ def printWay(recentWay):
         c += 1
         s = s[:-1]
         s += (recentWay + '->' + '?')
-    if c == 10:
-        s = (recentWay + '->' + '?')
+        if c == 10:
+            s = (recentWay + '->' + '?')
 
     print("Your way:")
     print(s)
@@ -165,11 +166,11 @@ while playing and player.alive:
         print("You and Ronald are to spend a detention in a Forbidden Forest.\nType 'help' to see what you can do. Good luck!")
         print()
         input("Press enter when you ready to start...")
-    printWay(recentWay)
+    #printWay(recentWay)
     printSituation()
     commandSuccess = False
     timePasses = False
-    if len(player.spells) == 3 and player.deluminatorsCount == 5:
+    if len(player.spells) >= 3 and player.deluminatorsCount >= 5:
         clear()
         playing = False
         print()
@@ -205,6 +206,7 @@ while playing and player.alive:
                 commandWords = command.split()
 
             if commandWords[0].lower() == "attack":
+                recentWay = None
                 def isInt(s):
                     try:
                         int(s)
@@ -232,7 +234,7 @@ while playing and player.alive:
                     targetSpell = player.spells[int(spell)-1]
 
                     player.attackCreature(creature, targetSpell)
-                    printWay(recentWay)
+                    #printWay(recentWay)
                     printSituation()
                     canBeAttacked = False
                 else:
@@ -244,7 +246,7 @@ while playing and player.alive:
                 player.health -= creature.damage
                 canBeAttacked = False
                 print("You succeeded in running away, but you lost " + str(creature.damage) + " points of health.")
-                printWay(recentWay)
+                #printWay(recentWay)
                 printSituation()
 
 
@@ -318,7 +320,7 @@ while playing and player.alive:
                         commandSuccess = False
             elif commandWords[0].lower() == "learn":
                 recentWay = None
-                printWay(recentWay)
+                #printWay(recentWay)
                 targetName = command[6:]
                 target = player.location.getSpellByName(targetName)
                 if target != False:
@@ -332,7 +334,7 @@ while playing and player.alive:
                 showHelp()
             elif commandWords[0].lower() == "open":
                 recentWay = None
-                printWay(recentWay)
+                #printWay(recentWay)
                 def isInt(s):
                     try:
                         int(s)
@@ -436,7 +438,7 @@ while playing and player.alive:
                 recentWay = None
                 clear()
                 print()
-                printWay(recentWay)
+                #printWay(recentWay)
                 print(player.location.desc)
                 print()
                 print("You are holding folowing items: ", player.printItems())
@@ -498,11 +500,12 @@ while playing and player.alive:
                     timeSinceAskedRon = 0
                     input("Press enter to continue...")
             elif commandWords[0].lower() == "talk":
+                recentWay = None
                 targetName = command[5:]
                 target = player.location.getCreatureByName(targetName)
                 if target != False:
                     if target.type == "unicorn" or target.type == "thestral" or target.type == "centaur":
-                        clear()
+                        #clear()
                         loot = ["spell", "heal", "del", None]
                         choice = random.choice(loot)
                         if choice == "heal":
@@ -519,7 +522,7 @@ while playing and player.alive:
                                 print()
                                 input("Press enter to continue...")
                         elif choice == "spell":
-                            if len(player.spells) == 3:
+                            if len(player.spells) == 3 or player.getSpellByName('Petrificus Totalus'):
                                 if 2 + player.itemsweight <= 8:
                                     player.items.append(Healing('Healing Potion', 'Drink this to restore health', 2, 20))
                                     print()
@@ -538,11 +541,11 @@ while playing and player.alive:
                                 print(str(target.name) + " taught you how to use Petrificus Totalus")
                                 print()
                                 input("Press enter to continue...")
-                        elif choice == "delum":
+                        elif choice == "del":
                             if player.deluminatorsCount < 4:
                                 if 1 + player.itemsweight <= 8:
                                     player.deluminatorsCount += 1
-                                    player.items(Item('Deluminator', 'Bring this to Dumbledore', 1))
+                                    player.items.append(Item('Deluminator', 'Bring this to Dumbledore', 1))
                                     print()
                                     print(str(target.name) + " gave you a deluminator.")
                                     print()
@@ -569,14 +572,12 @@ while playing and player.alive:
 
                         elif choice == None:
                             print()
-                            printWay(recentWay)
                             printSituation()
                             print("Talking to this creature didn't result in anything, you can try again")
                             print()
                             input("Press enter to continue...")
                     else:
-                        clear()
-                        printWay(recentWay)
+                        #clear()
                         printSituation()
                         print("This creature doesn't want to talk with you...")
                         commandSuccess = False

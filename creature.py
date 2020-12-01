@@ -10,16 +10,16 @@ class Creature:
             self.name = "Troll " + name
             self.health = 100
             self.room = room
-            self.damage = 20
+            self.damage = 15
             room.addCreature(self)
             updater.register(self)
 
         elif self.type == "hippogriff":
             self.peaceful = False
             self.name = "Hippogriff " + name
-            self.health = 200
+            self.health = 110
             self.room = room
-            self.damage = 20
+            self.damage = 15
             room.addCreature(self)
             updater.register(self)
 
