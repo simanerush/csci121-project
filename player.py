@@ -112,10 +112,7 @@ class Player:
             cr.health -= spell.damage
             print()
             input("Press enter to continue...")
-        if self.health <= 0:
-            clear()
-            print("You died.")
-            self.alive = False
+
         if cr.health <= 0 and self.health > 0:
             clear()
             print("You win. Your health is now " + str(self.health) + ".")
@@ -126,7 +123,7 @@ class Player:
                 if choice is not None:
                     if self.itemsweight + choice.weight <= 8:
                         if choice.name == 'Deluminator':
-                            player.deluminatorsCount += 1
+                            self.deluminatorsCount += 1
                         self.items.append(choice)
                         print()
                         print("You've got", choice.name)
